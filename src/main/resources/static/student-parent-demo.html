@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APIJSON学生家长管理系统演示</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .feature-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+        }
+        .json-display {
+            background: #f1f3f4;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .operation-btn {
+            margin: 5px;
+        }
+        .result-section {
+            margin-top: 15px;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .api-endpoint {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="text-center mb-5">
+            <h1 class="display-4">
+                <i class="fas fa-graduation-cap text-primary"></i>
+                APIJSON学生家长管理系统
+            </h1>
+            <p class="lead text-muted">零代码CRUD API演示平台</p>
+        </div>
+
+        <!-- API基本信息 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-info-circle text-info"></i> 系统信息</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="api-endpoint">
+                        <strong>API Base URL:</strong> <span id="baseUrl">http://localhost:8080</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="api-endpoint">
+                        <strong>Status:</strong> 
+                        <span id="apiStatus" class="badge bg-secondary">检测中...</span>
+                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="checkApiStatus()">
+                            <i class="fas fa-sync"></i> 检测
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学生管理 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-user-graduate text-success"></i> 学生管理 (Student)</h3>
+            
+            <!-- 学生查询区域 -->
+            <div class="mb-4">
+                <h5>查询操作</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button class="btn btn-primary operation-btn" onclick="queryAllStudents()">
+                        <i class="fas fa-list"></i> 查询所有学生
+                    </button>
+                    <button class="btn btn-info operation-btn" onclick="queryStudentById()">
+                        <i class="fas fa-search"></i> 按ID查询
+                    </button>
+                    <button class="btn btn-secondary operation-btn" onclick="queryStudentsByGrade()">
+                        <i class="fas fa-filter"></i> 按年级查询
+                    </button>
+                    <button class="btn btn-warning operation-btn" onclick="countStudents()">
+                        <i class="fas fa-calculator"></i> 统计数量
+                    </button>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="number" id="studentIdInput" class="form-control" placeholder="输入学生ID" min="1">
+                    </div>
+                    <div class="col-md-6">
+                        <select id="gradeSelect" class="form-select">
+                            <option value="">选择年级</option>
+                            <option value="七年级">七年级</option>
+                            <option value="八年级">八年级</option>
+                            <option value="九年级">九年级</option>
+                            <option value="十年级">十年级</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学生数据展示 -->
+            <div class="table-container">
+                <table class="table table-striped table-hover" id="studentTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>年龄</th>
+                            <th>年级</th>
+                            <th>班级</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- 学生CUD操作 -->
+            <div class="mt-4">
+                <h5>增删改操作</h5>
+                <button class="btn btn-success operation-btn" onclick="showAddStudentForm()">
+                    <i class="fas fa-plus"></i> 添加学生
+                </button>
+                <button class="btn btn-danger operation-btn" onclick="deleteStudent()">
+                    <i class="fas fa-trash"></i> 删除学生
+                </button>
+            </div>
+        </div>
+
+        <!-- 家长管理 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-users text-warning"></i> 家长管理 (Parent)</h3>
+            
+            <div class="mb-4">
+                <h5>查询操作</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button class="btn btn-primary operation-btn" onclick="queryAllParents()">
+                        <i class="fas fa-list"></i> 查询所有家长
+                    </button>
+                    <button class="btn btn-info operation-btn" onclick="queryParentsByStudent()">
+                        <i class="fas fa-link"></i> 按学生查询家长
+                    </button>
+                    <button class="btn btn-secondary operation-btn" onclick="queryEmergencyContacts()">
+                        <i class="fas fa-phone"></i> 紧急联系人
+                    </button>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="number" id="parentStudentIdInput" class="form-control" placeholder="输入学生ID查找家长" min="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 家长数据展示 -->
+            <div class="table-container">
+                <table class="table table-striped table-hover" id="parentTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>学生ID</th>
+                            <th>姓名</th>
+                            <th>关系</th>
+                            <th>联系电话</th>
+                            <th>职业</th>
+                            <th>紧急联系人</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <h5>增删改操作</h5>
+                <button class="btn btn-success operation-btn" onclick="showAddParentForm()">
+                    <i class="fas fa-plus"></i> 添加家长
+                </button>
+            </div>
+        </div>
+
+        <!-- 联表查询演示 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-project-diagram text-danger"></i> 联表查询演示</h3>
+            <p class="text-muted">展示APIJSON强大的关联查询能力</p>
+            
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-danger operation-btn" onclick="queryStudentWithParents()">
+                    <i class="fas fa-sitemap"></i> 学生及其家长
+                </button>
+                <button class="btn btn-info operation-btn" onclick="queryComplexRelation()">
+                    <i class="fas fa-network-wired"></i> 复杂关联查询
+                </button>
+                <button class="btn btn-warning operation-btn" onclick="queryWithConditions()">
+                    <i class="fas fa-filter"></i> 条件关联查询
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="number" id="relationStudentId" class="form-control" placeholder="输入学生ID进行关联查询" min="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- API请求和响应展示 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-code text-primary"></i> API请求响应</h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>请求 (Request)</h5>
+                    <div class="json-display" id="requestDisplay">点击上方任意操作按钮查看API请求</div>
+                </div>
+                <div class="col-md-6">
+                    <h5>响应 (Response)</h5>
+                    <div class="json-display" id="responseDisplay">API响应将在这里显示</div>
+                </div>
+            </div>
+            
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">正在处理请求...</p>
+            </div>
+        </div>
+
+        <!-- APIJSON特性说明 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-star text-success"></i> APIJSON核心特性</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-rocket"></i> 零代码开发</h5>
+                    <ul>
+                        <li>无需编写任何业务代码</li>
+                        <li>通过JSON配置实现CRUD</li>
+                        <li>自动生成RESTful API</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt"></i> 权限控制</h5>
+                    <ul>
+                        <li>基于角色的访问控制</li>
+                        <li>表级和字段级权限</li>
+                        <li>动态权限验证</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-link"></i> 关联查询</h5>
+                    <ul>
+                        <li>支持多表JOIN查询</li>
+                        <li>嵌套对象查询</li>
+                        <li>数组关联查询</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-check-circle"></i> 请求验证</h5>
+                    <ul>
+                        <li>自动参数验证</li>
+                        <li>SQL注入防护</li>
+                        <li>数据格式校验</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加学生模态框 -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm">
+                        <div class="mb-3">
+                            <label class="form-label">学号</label>
+                            <input type="text" class="form-control" name="student_no" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">姓名</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="0">男</option>
+                                <option value="1">女</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">年龄</label>
+                            <input type="number" class="form-control" name="age" min="1" max="100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">年级</label>
+                            <select class="form-select" name="grade" required>
+                                <option value="七年级">七年级</option>
+                                <option value="八年级">八年级</option>
+                                <option value="九年级">九年级</option>
+                                <option value="十年级">十年级</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">班级</label>
+                            <input type="text" class="form-control" name="class_name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">电话</label>
+                            <input type="tel" class="form-control" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">地址</label>
+                            <textarea class="form-control" name="address" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" onclick="addStudent()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加家长模态框 -->
+    <div class="modal fade" id="addParentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加家长</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addParentForm">
+                        <div class="mb-3">
+                            <label class="form-label">学生ID</label>
+                            <input type="number" class="form-control" name="student_id" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">家长姓名</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">关系</label>
+                            <select class="form-select" name="relationship" required>
+                                <option value="父亲">父亲</option>
+                                <option value="母亲">母亲</option>
+                                <option value="爷爷">爷爷</option>
+                                <option value="奶奶">奶奶</option>
+                                <option value="外公">外公</option>
+                                <option value="外婆">外婆</option>
+                                <option value="监护人">监护人</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="0">男</option>
+                                <option value="1">女</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">年龄</label>
+                            <input type="number" class="form-control" name="age" min="1" max="120">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">联系电话</label>
+                            <input type="tel" class="form-control" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">职业</label>
+                            <input type="text" class="form-control" name="occupation">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">工作地址</label>
+                            <textarea class="form-control" name="work_address" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_emergency_contact" value="1">
+                                <label class="form-check-label">设为紧急联系人</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" onclick="addParent()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script src="js/student-parent-demo.js"></script>
+</body>
+</html>
