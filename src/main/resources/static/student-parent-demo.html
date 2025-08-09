@@ -91,7 +91,7 @@
             
             <!-- 学生查询区域 -->
             <div class="mb-4">
-                <h5>查询操作</h5>
+                <h5>基础查询操作</h5>
                 <div class="btn-group mb-3" role="group">
                     <button class="btn btn-primary operation-btn" onclick="queryAllStudents()">
                         <i class="fas fa-list"></i> 查询所有学生
@@ -106,12 +106,28 @@
                         <i class="fas fa-calculator"></i> 统计数量
                     </button>
                 </div>
+                
+                <h5>聚合复杂查询</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button class="btn btn-success operation-btn" onclick="groupByGrade()">
+                        <i class="fas fa-chart-bar"></i> 按年级分组统计
+                    </button>
+                    <button class="btn btn-info operation-btn" onclick="averageAgeByGrade()">
+                        <i class="fas fa-chart-line"></i> 各年级平均年龄
+                    </button>
+                    <button class="btn btn-primary operation-btn" onclick="paginationQuery()">
+                        <i class="fas fa-layer-group"></i> 分页查询
+                    </button>
+                    <button class="btn btn-secondary operation-btn" onclick="ageRangeQuery()">
+                        <i class="fas fa-sliders-h"></i> 年龄范围查询
+                    </button>
+                </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <input type="number" id="studentIdInput" class="form-control" placeholder="输入学生ID" min="1">
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <select id="gradeSelect" class="form-select">
                             <option value="">选择年级</option>
                             <option value="七年级">七年级</option>
@@ -119,6 +135,12 @@
                             <option value="九年级">九年级</option>
                             <option value="十年级">十年级</option>
                         </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" id="minAge" class="form-control" placeholder="最小年龄" min="1" max="100">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" id="maxAge" class="form-control" placeholder="最大年龄" min="1" max="100">
                     </div>
                 </div>
             </div>
@@ -211,21 +233,87 @@
             <h3><i class="fas fa-project-diagram text-danger"></i> 联表查询演示</h3>
             <p class="text-muted">展示APIJSON强大的关联查询能力</p>
             
-            <div class="btn-group mb-3" role="group">
-                <button class="btn btn-danger operation-btn" onclick="queryStudentWithParents()">
-                    <i class="fas fa-sitemap"></i> 学生及其家长
-                </button>
-                <button class="btn btn-info operation-btn" onclick="queryComplexRelation()">
-                    <i class="fas fa-network-wired"></i> 复杂关联查询
-                </button>
-                <button class="btn btn-warning operation-btn" onclick="queryWithConditions()">
-                    <i class="fas fa-filter"></i> 条件关联查询
-                </button>
+            <div class="mb-3">
+                <h5>简单关联查询</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button class="btn btn-danger operation-btn" onclick="queryStudentWithParents()">
+                        <i class="fas fa-sitemap"></i> 学生及其家长
+                    </button>
+                    <button class="btn btn-info operation-btn" onclick="queryParentsByStudent()">
+                        <i class="fas fa-link"></i> 按学生查询家长
+                    </button>
+                    <button class="btn btn-secondary operation-btn" onclick="queryEmergencyContacts()">
+                        <i class="fas fa-phone"></i> 所有紧急联系人
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h5>复杂关联查询</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button class="btn btn-warning operation-btn" onclick="queryFathersWithStudents()">
+                        <i class="fas fa-male"></i> 所有父亲及学生信息
+                    </button>
+                    <button class="btn btn-success operation-btn" onclick="queryGradeEmergencyContacts()">
+                        <i class="fas fa-phone-alt"></i> 九年级紧急联系人
+                    </button>
+                    <button class="btn btn-primary operation-btn" onclick="queryOccupationStatistics()">
+                        <i class="fas fa-chart-pie"></i> 家长职业分布统计
+                    </button>
+                    <button class="btn btn-dark operation-btn" onclick="queryComplexJoinDemo()">
+                        <i class="fas fa-network-wired"></i> 综合关联演示
+                    </button>
+                </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <input type="number" id="relationStudentId" class="form-control" placeholder="输入学生ID进行关联查询" min="1">
+                </div>
+                <div class="col-md-6">
+                    <select id="relationshipSelect" class="form-select">
+                        <option value="">选择关系</option>
+                        <option value="父亲">父亲</option>
+                        <option value="母亲">母亲</option>
+                        <option value="爷爷">爷爷</option>
+                        <option value="奶奶">奶奶</option>
+                        <option value="外公">外公</option>
+                        <option value="外婆">外婆</option>
+                        <option value="监护人">监护人</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计分析 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-chart-bar text-info"></i> 数据统计分析</h3>
+            <p class="text-muted">基于APIJSON的实时数据统计和分析功能</p>
+            
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-info operation-btn" onclick="showGenderDistribution()">
+                    <i class="fas fa-venus-mars"></i> 性别分布
+                </button>
+                <button class="btn btn-success operation-btn" onclick="showGradeStatistics()">
+                    <i class="fas fa-graduation-cap"></i> 年级统计
+                </button>
+                <button class="btn btn-warning operation-btn" onclick="showAgeDistribution()">
+                    <i class="fas fa-birthday-cake"></i> 年龄分布
+                </button>
+                <button class="btn btn-primary operation-btn" onclick="showParentRelationshipStats()">
+                    <i class="fas fa-users"></i> 家长关系统计
+                </button>
+            </div>
+            
+            <!-- 统计图表展示区域 -->
+            <div id="statisticsDisplay" class="mt-3" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-striped" id="statisticsTable">
+                        <thead class="table-dark">
+                            <tr id="statisticsTableHeader"></tr>
+                        </thead>
+                        <tbody id="statisticsTableBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -250,6 +338,42 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2">正在处理请求...</p>
+            </div>
+        </div>
+
+        <!-- 系统工具 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-tools text-secondary"></i> 系统工具</h3>
+            <p class="text-muted">实用工具和系统管理功能</p>
+            
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-info operation-btn" onclick="quickDemo()">
+                    <i class="fas fa-play-circle"></i> 快速演示
+                </button>
+                <button class="btn btn-secondary operation-btn" onclick="advancedSearch()">
+                    <i class="fas fa-search-plus"></i> 高级搜索
+                </button>
+                <button class="btn btn-warning operation-btn" onclick="bulkOperations()">
+                    <i class="fas fa-tasks"></i> 批量操作
+                </button>
+                <button class="btn btn-success operation-btn" onclick="exportData('complete')">
+                    <i class="fas fa-download"></i> 数据导出
+                </button>
+            </div>
+            
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-primary operation-btn" onclick="showSystemInfo()">
+                    <i class="fas fa-info-circle"></i> 系统信息
+                </button>
+                <button class="btn btn-danger operation-btn" onclick="clearAllTables()">
+                    <i class="fas fa-trash-alt"></i> 清空表格
+                </button>
+                <button class="btn btn-dark operation-btn" onclick="window.open('https://github.com/Tencent/APIJSON', '_blank')">
+                    <i class="fab fa-github"></i> APIJSON文档
+                </button>
+                <button class="btn btn-primary operation-btn" onclick="window.open('charts.html', '_blank')">
+                    <i class="fas fa-chart-bar"></i> ECharts图表展示
+                </button>
             </div>
         </div>
 
@@ -287,6 +411,49 @@
                         <li>自动参数验证</li>
                         <li>SQL注入防护</li>
                         <li>数据格式校验</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="feature-card">
+            <h3><i class="fas fa-graduation-cap text-info"></i> 功能演示说明</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>📋 学生单表操作</h5>
+                    <ul>
+                        <li><strong>基础CRUD</strong>：增删改查学生信息</li>
+                        <li><strong>条件查询</strong>：按ID、年级、年龄范围筛选</li>
+                        <li><strong>聚合查询</strong>：分组统计、平均值计算</li>
+                        <li><strong>分页排序</strong>：支持分页和多字段排序</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>👨‍👩‍👧‍👦 家长关联操作</h5>
+                    <ul>
+                        <li><strong>简单关联</strong>：学生-家长一对多查询</li>
+                        <li><strong>复杂关联</strong>：多条件联表查询</li>
+                        <li><strong>数据统计</strong>：职业分布、关系统计</li>
+                        <li><strong>业务查询</strong>：紧急联系人查找</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>📊 数据分析功能</h5>
+                    <ul>
+                        <li><strong>性别分布</strong>：学生性别比例分析</li>
+                        <li><strong>年级统计</strong>：各年级详细统计数据</li>
+                        <li><strong>年龄分布</strong>：年龄段分布统计</li>
+                        <li><strong>家长分析</strong>：家长关系和职业分析</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>🔧 系统工具</h5>
+                    <ul>
+                        <li><strong>快速演示</strong>：自动演示所有功能</li>
+                        <li><strong>高级搜索</strong>：自定义JSON查询</li>
+                        <li><strong>数据导出</strong>：支持数据导出功能</li>
+                        <li><strong>批量操作</strong>：批量数据处理工具</li>
                     </ul>
                 </div>
             </div>
