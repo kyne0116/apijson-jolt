@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 只使用控制台输出，不创建任何文件 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- 设置根日志级别 -->
+    <root level="WARN">
+        <appender-ref ref="STDOUT" />
+    </root>
+    
+    <!-- APIJSON相关日志 -->
+    <logger name="apijson" level="INFO" />
+    
+    <!-- 禁用一些可能导致问题的日志 -->
+    <logger name="com.zaxxer.hikari" level="ERROR" />
+    <logger name="org.springframework" level="ERROR" />
+</configuration>

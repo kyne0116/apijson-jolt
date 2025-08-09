@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APIJSON-JOLT 学生数据图表分析</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.2/echarts.min.js"></script>
+    <style>
+        .chart-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chart-card {
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-box {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .data-source-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .jolt-transform-info {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #9c27b0;
+        }
+        .nav-link {
+            color: #495057;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <!-- 页面标题 -->
+        <div class="text-center mb-5">
+            <h1 class="display-4">
+                <i class="fas fa-chart-bar text-primary"></i>
+                APIJSON-JOLT 学生数据图表分析
+            </h1>
+            <p class="lead text-muted">基于ECharts的数据可视化平台，展示APIJSON + JOLT数据转换能力</p>
+            
+            <!-- 导航链接 -->
+            <nav class="nav justify-content-center mt-4">
+                <a class="nav-link" href="student-parent-demo.html">
+                    <i class="fas fa-table"></i> 返回数据管理
+                </a>
+                <a class="nav-link" href="#grade-chart">
+                    <i class="fas fa-chart-bar"></i> 年级分布
+                </a>
+                <a class="nav-link" href="#gender-chart">
+                    <i class="fas fa-chart-pie"></i> 性别分布
+                </a>
+                <a class="nav-link" href="#age-chart">
+                    <i class="fas fa-chart-line"></i> 年龄分析
+                </a>
+            </nav>
+        </div>
+
+        <!-- 系统信息 -->
+        <div class="data-source-info">
+            <h5><i class="fas fa-database text-primary"></i> 数据源信息</h5>
+            <p class="mb-1"><strong>API接口:</strong> <span id="apiBaseUrl">http://localhost:8080</span></p>
+            <p class="mb-1"><strong>数据表:</strong> Student (学生表)</p>
+            <p class="mb-0"><strong>连接状态:</strong> <span id="connectionStatus" class="badge bg-secondary">检测中...</span></p>
+        </div>
+
+        <div class="jolt-transform-info">
+            <h5><i class="fas fa-exchange-alt text-purple"></i> JOLT转换信息</h5>
+            <p class="mb-1"><strong>转换引擎:</strong> JOLT (JSON to JSON transformation)</p>
+            <p class="mb-1"><strong>转换目标:</strong> APIJSON响应格式 → ECharts数据格式</p>
+            <p class="mb-0"><strong>转换接口:</strong> /jolt/transform</p>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="chart-card">
+            <h3 class="chart-title">
+                <i class="fas fa-tachometer-alt text-info"></i>
+                数据概览
+            </h3>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalStudents">-</div>
+                    <div class="stat-label">学生总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalGrades">-</div>
+                    <div class="stat-label">年级数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgAge">-</div>
+                    <div class="stat-label">平均年龄</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="maleRatio">-</div>
+                    <div class="stat-label">男生比例</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <h5><i class="fas fa-sliders-h"></i> 图表控制</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100" onclick="refreshAllCharts()">
+                        <i class="fas fa-sync-alt"></i> 刷新所有图表
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100" onclick="exportChartsData()">
+                        <i class="fas fa-download"></i> 导出图表数据
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-info w-100" onclick="showJoltTransformDemo()">
+                        <i class="fas fa-code"></i> 查看JOLT转换
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 年级分布柱状图 -->
+        <div class="chart-card" id="grade-chart">
+            <h3 class="chart-title">
+                <i class="fas fa-chart-bar text-success"></i>
+                学生年级分布 (柱状图)
+                <small class="text-muted">- 使用JOLT转换APIJSON数据</small>
+            </h3>
+            <div class="loading-spinner" id="gradeLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2">正在加载年级分布数据...</p>
+            </div>
+            <div class="chart-box" id="gradeChart"></div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    数据来源: APIJSON查询 → JOLT转换 → ECharts渲染
+                </small>
+            </div>
+        </div>
+
+        <!-- 性别分布饼图 -->
+        <div class="chart-card" id="gender-chart">
+            <h3 class="chart-title">
+                <i class="fas fa-chart-pie text-warning"></i>
+                学生性别分布 (饼图)
+                <small class="text-muted">- 使用JOLT转换APIJSON数据</small>
+            </h3>
+            <div class="loading-spinner" id="genderLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2">正在加载性别分布数据...</p>
+            </div>
+            <div class="chart-box" id="genderChart"></div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    数据来源: APIJSON查询 → JOLT转换 → ECharts渲染
+                </small>
+            </div>
+        </div>
+
+        <!-- 年龄分布折线图 -->
+        <div class="chart-card" id="age-chart">
+            <h3 class="chart-title">
+                <i class="fas fa-chart-line text-danger"></i>
+                学生年龄分布 (折线图)
+                <small class="text-muted">- 使用JOLT转换APIJSON数据</small>
+            </h3>
+            <div class="loading-spinner" id="ageLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2">正在加载年龄分布数据...</p>
+            </div>
+            <div class="chart-box" id="ageChart"></div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    数据来源: APIJSON查询 → JOLT转换 → ECharts渲染
+                </small>
+            </div>
+        </div>
+
+        <!-- JOLT转换演示模态框 -->
+        <div class="modal fade" id="joltDemoModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exchange-alt"></i> JOLT转换演示
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6>APIJSON原始数据</h6>
+                                <pre class="bg-light p-3 rounded" id="originalData" style="height: 300px; overflow-y: auto;"></pre>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>JOLT转换规则</h6>
+                                <pre class="bg-light p-3 rounded" id="joltSpec" style="height: 300px; overflow-y: auto;"></pre>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>ECharts数据格式</h6>
+                                <pre class="bg-light p-3 rounded" id="transformedData" style="height: 300px; overflow-y: auto;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" onclick="testJoltTransform()">测试转换</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术栈信息 -->
+        <div class="chart-card">
+            <h3 class="chart-title">
+                <i class="fas fa-layer-group text-info"></i>
+                技术架构
+            </h3>
+            <div class="row">
+                <div class="col-md-3">
+                    <h5><i class="fas fa-database text-primary"></i> 数据层</h5>
+                    <ul class="list-unstyled">
+                        <li>• MySQL 8.0</li>
+                        <li>• Student表</li>
+                        <li>• APIJSON零代码接口</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5><i class="fas fa-exchange-alt text-warning"></i> 转换层</h5>
+                    <ul class="list-unstyled">
+                        <li>• JOLT转换引擎</li>
+                        <li>• JSON格式转换</li>
+                        <li>• 数据结构映射</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5><i class="fas fa-chart-bar text-success"></i> 可视化层</h5>
+                    <ul class="list-unstyled">
+                        <li>• ECharts 5.4.2</li>
+                        <li>• 响应式图表</li>
+                        <li>• 多种图表类型</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5><i class="fas fa-window-maximize text-danger"></i> 前端层</h5>
+                    <ul class="list-unstyled">
+                        <li>• Bootstrap 5</li>
+                        <li>• JavaScript ES6+</li>
+                        <li>• 响应式设计</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="text-center mt-5 mb-3">
+            <p class="text-muted">
+                <i class="fas fa-heart text-danger"></i>
+                基于 APIJSON + JOLT + ECharts 构建的数据可视化平台
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script src="js/charts.js"></script>
+</body>
+</html>

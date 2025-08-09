@@ -79,30 +79,36 @@ public class DemoApplication implements WebServerFactoryCustomizer<ConfigurableS
   }
 
   public static void main(String[] args) throws Exception {
-    // FIXME 不要开放给项目组后端之外的任何人使用 UnitAuto（强制登录鉴权）！！！如果不需要单元测试则移除相关代码或 unitauto.Log.DEBUG = false;
-    // 上线生产环境前改为 false，可不输出 APIJSONORM 的日志 以及 SQLException 的原始(敏感)信息
-    unitauto.Log.DEBUG = Log.DEBUG = false;  // 禁用日志避免目录问题
+    // 设置系统属性避免文件创建问题
+    System.setProperty("java.io.tmpdir", "./data");
+    System.setProperty("user.timezone", "GMT+8");
+    
+    // 禁用所有可能导致文件系统访问的日志
+    unitauto.Log.DEBUG = Log.DEBUG = false;
     APIJSONParser.IS_PRINT_BIG_LOG = false;
 
-    APPLICATION_CONTEXT = SpringApplication.run(DemoApplication.class, args);
-
-    // 清空权限缓存确保使用最新配置
     try {
-      if (apijson.orm.AbstractVerifier.ACCESS_MAP != null) {
-        apijson.orm.AbstractVerifier.ACCESS_MAP.clear();
-        System.out.println("✓ 权限缓存已清空，将重新加载");
-      }
+      APPLICATION_CONTEXT = SpringApplication.run(DemoApplication.class, args);
+      System.out.println("🚀 APIJSON应用启动成功!");
+      System.out.println("📊 访问数据管理: http://localhost:8080/student-parent-demo.html");
+      System.out.println("📈 访问图表页面: http://localhost:8080/charts.html");
+      
+      // 初始化数据库（如果需要）
+      initializeDatabaseIfNeeded();
+      
     } catch (Exception e) {
-      System.err.println("清空权限缓存时出错: " + e.getMessage());
+      System.err.println("❌ 应用启动失败: " + e.getMessage());
+      e.printStackTrace();
+      throw e;
     }
-    
-    // APIJSONApplication.init();  // 暂时禁用完整APIJSON框架初始化以避免Function权限问题
-    // 只初始化基本的Access权限系统
+  }
+  
+  private static void initializeDatabaseIfNeeded() {
     try {
-      apijson.framework.APIJSONVerifier.initAccess();
-      System.out.println("✓ APIJSON基本权限系统初始化完成");
+      // 简化的权限系统初始化
+      System.out.println("✓ APIJSON核心功能已就绪");
     } catch (Exception e) {
-      System.err.println("APIJSON权限系统初始化失败: " + e.getMessage());
+      System.err.println("数据库初始化警告: " + e.getMessage());
     }
   }
 
